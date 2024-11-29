@@ -64,7 +64,7 @@ fn create_main_file_stub(day: u32, main_filename: PathBuf) -> Result<()> {
 
     let mut main_output = String::new();
 
-    main_output += &"use advent_of_code_2023::input::get_vector_from_file;\n\n";
+    main_output += &"use advent_of_code_2024::input::get_vector_from_file;\n\n";
     main_output += &"fn main() ->Result<(),Box<dyn std::error::Error>> {\n";
     main_output += format!("    let input = get_vector_from_file(\"src/day{:00}/input.txt\", parse_input_line);\n",day).as_str();
     main_output += format!("    println!(\"Day {} part 1 \");\n",day).as_str();
