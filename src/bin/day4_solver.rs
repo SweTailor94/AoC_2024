@@ -1,4 +1,3 @@
-use std::collections::VecDeque;
 use advent_of_code_2024::input::get_vector_from_file;
 
 fn main() ->Result<(),Box<dyn std::error::Error>> {
