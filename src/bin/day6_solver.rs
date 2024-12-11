@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::time::Instant;
 use advent_of_code_2024::input::get_vector_from_file;
 
 fn main() ->Result<(),Box<dyn std::error::Error>> {
@@ -7,7 +8,9 @@ fn main() ->Result<(),Box<dyn std::error::Error>> {
     let path = solve_part_one(input.clone());
     println!("{}",path.len() );
     println!("Day 6 part 2 ");
+    let start = Instant::now();
     println!("{}",solve_part_two(input.clone(), path));
+    println!("Time elapsed {:?}", start.elapsed());
       Ok(())
 }
 
