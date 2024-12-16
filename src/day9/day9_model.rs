@@ -1,8 +1,6 @@
 // model types for Day9
 
 use std::collections::VecDeque;
-use std::io::empty;
-use nom::Parser;
 use crate::input::InputParser;
 
 pub struct Haddrive{
@@ -53,26 +51,6 @@ impl Haddrive {
         }
     }
     
-    pub fn print(&self) {
-        let mut count = 0;
-        self.blocks.iter().for_each(|x| {
-            match x {
-                Block::Empty => print!("."),
-                Block::Id(v) => print!("{}|", v),
-            }
-            count += 1;
-            if count == 50{
-                count = 0;
-                println!("");
-            }
-        });
-        println!();
-    }
-    pub fn print2(&self) {
-        self.empty_spaces.iter().for_each(|x| {
-            print!("{:?}", x);
-        })
-    }
     pub fn compact(&mut self)  -> u64 {
         let mut compacted : Vec::<u32> = Vec::new();
         let blocks = self.blocks.iter().filter(|x| !matches!(**x,  Block::Empty) ).count();
@@ -122,7 +100,7 @@ impl InputParser for Haddrive {
             let count = numbers[id*2+1];
             self.empty_spaces.push_back(Empty{size: count as usize, start_index: index, }); // part2 
             index += count as usize;
-            for c in 0..count as usize {
+            for _ in 0..count as usize {
                 self.blocks.push_back(Block::Empty);
             }
             id+=1;
