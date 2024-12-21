@@ -11,7 +11,7 @@ fn main()  -> Result<(),Box<dyn std::error::Error>>{
 
     let now = chrono::offset::Local::now().date_naive();
     let year = now.year();
-    let day = 18;//now.day();
+    let day = now.day();
     let month = now.month();
     if month != 12 {
         println!("Not December yet, come back later.");
