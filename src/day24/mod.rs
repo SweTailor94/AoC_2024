@@ -1,0 +1,1 @@
+pub mod day24_model;

@@ -1,12 +1,36 @@
-use advent_of_code_2024::input::get_vector_from_file;
+use advent_of_code_2024::day17::day17_model::Computer;
 
 fn main() ->Result<(),Box<dyn std::error::Error>> {
-    let input = get_vector_from_file("src/day17/input.txt", parse_input_line);
+    let mut computer : Computer = Computer::new();
+    computer.mnemonics();
+    //return Ok(());
     println!("Day 17 part 1 ");
+    let output = computer.execute();
+    println!("{:?}",output);
+    println!("{:?}", output.iter().map( |x| x.to_string()).collect::<Vec<String>>().join(","));
     println!("Day 17 part 2 ");
-      Ok(())
+    let mut comp2 = Computer::new();
+    comp2.set_start(35184372088832,0,0);
+    println!("{}", comp2.part2());
+    
+    // println!("{:}",comp2.get_a());
+    // loop {
+    //     let mut input: String = String::new();
+    //     std::io::stdin().read_line(&mut input)?;
+    //     if input == "q" || input == "quit" {
+    //         break;
+    //     }
+    //     let a:i64 = match input.trim().parse() {
+    //         Ok(num) => num,
+    //         Err(error) => {
+    //             println!("try parse |{}| Error: {}", input.trim(), error);                    
+    //             continue;
+    //         }
+    //     };
+    // 
+    //     comp2.is_program(a);
+    //     println!("{:?}",comp2.mem);
+    // }
+    Ok(())
 }
 
-fn parse_input_line(line:&str) -> usize{
-    line.len()
-}
