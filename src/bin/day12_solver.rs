@@ -6,10 +6,11 @@ fn main() ->Result<(),Box<dyn std::error::Error>> {
     let _ = parse_input_file ("src/day12/input.txt", &mut input);
     println!("Day 12 part 1 ");
    
-    println!("{}",input.part1());
+    println!("{:?}",input.part1());
     
-    input.print();
+    //input.print();
     //println!("Day 12 part 2 ");
       Ok(())
 }
+
 

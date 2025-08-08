@@ -1,26 +1,66 @@
 use crate::input::InputParser;
-use std::collections::HashMap;
-use std::fmt::Display;
+use std::collections::{VecDeque};
+use itertools::Itertools;
+
 pub const  NO_REG: u64 = 0xFFFFFFFF_FFFFFFFF;
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy,Debug)]
 pub struct Plant{
     spec: char,
-    perimeter: u8,
-    pub region: u64,
+    top: bool,
+    bottom: bool,
+    left: bool,
+    right: bool,
 }
+
+
 impl Plant {
     pub fn new(spec: char) -> Plant {
-        Plant { spec, perimeter: 4 , region: NO_REG }
+        Plant {
+            spec,
+            top: true,
+            bottom: true,
+            left: true,
+            right: true,
+        }
     }
 
-    pub fn dec(&mut self) {
-        self.perimeter = self.perimeter - 1;
-    }
+    // pub fn dec(&mut self) {
+    //     self.perimeter = self.perimeter - 1;
+    // }
     pub fn char(&self) -> char {
         self.spec
     }
     pub fn perimeter(&self) -> u8 {
-        self.perimeter
+        let mut ans = if self.top {1} else {0} ;
+        ans += if self.bottom {1}else{0};
+        ans += if self.left {1}else{0};
+        ans += if self.right {1}else{0};
+        ans
+    }
+
+    pub fn no_top(&mut self){
+        self.top = false;
+    }
+    pub fn no_bottom(&mut self) {
+        self.bottom = false;
+    }
+    pub fn no_left(&mut self) {
+        self.left = false;
+    }
+    pub fn no_right(&mut self) {
+        self.right = false;
+    }
+
+    pub(crate) fn aligns_vertical(&self, p0: &Plant) -> u64 {
+
+        let mut x = if self.left && p0.left {1} else {0};
+        x += if self.right && p0.right {1}else{0};
+        x
+    }
+    pub(crate) fn aligns_horizontal(&self, p0: &Plant) -> u64 {
+        let mut x = if self.top && p0.top {1} else {0};
+        x += if self.bottom && p0.bottom {1}else{0};
+        x
     }
 }
 
@@ -43,75 +83,95 @@ pub struct FenceAreas{
 }
 
 impl FenceAreas {
-    pub fn part1(&mut self) -> u64 {
-        let mut next_region = 1;
+    pub fn part1(&mut self) -> (u64,u64) { // returns (Part1, Part2)
+        let mut untoutched_squares: VecDeque<(usize,usize)> = VecDeque::new();
         for row in 0..self.rows {
             for col in 0..self.cols {
-                //print!("({},{}) ", row, col);
-                let mut region = NO_REG;
-                if row > 0 && self.map[row][col] == self.map[row - 1][col] {
-                    region = self.map[row - 1][col].region;
-                }
-                if col > 0 && self.map[row][col] == self.map[row][col - 1] {
-                    region = region.min(self.map[row][col - 1].region);
-                }
-                if region == NO_REG {
-                    self.map[row][col].region = next_region;
-                    //print!("Set this to {}", next_region);
-                    next_region += 1;
-                } else {
-                    self.map[row][col].region = region;
-                }
-                
+                untoutched_squares.push_back((row,col));
                 if row > 0 {
                     if self.map[row][col] == self.map[row - 1][col] {
-                        self.map[row][col].dec();
-                        self.map[row - 1][col].dec();
-                        // print!("this {}, above {}. ",self.map[row][col].region, self.map[row - 1][col].region);
-                        if self.map[row][col].region < self.map[row - 1][col].region {
-                            let mut rev = row-1;
-                            while self.map[rev][col] == self.map[row][col] {
-                                // print!("Change ({},{}) to {}, ", rev,col,self.map[row][col].region );
-                                self.map[rev][col].region = self.map[row][col].region;
-                                if rev == 0 { break; }
-                                rev -= 1;
-                            }
-                        } 
+                        self.map[row][col].no_top();
+                        self.map[row - 1][col].no_bottom();
                     }
                 }
                 if col > 0  {
                     if self.map[row][col] == self.map[row][col - 1] {
-                        self.map[row][col].dec();
-                        self.map[row][col - 1].dec();
-                        if self.map[row][col].region < self.map[row][col - 1].region {
-                            let mut rev = col-1;
-                            while  self.map[row][col] == self.map[row][rev]{
-                                self.map[row][rev].region = self.map[row][col].region;
-                                if rev == 0 { break; }
-                                rev = rev - 1;
-                            }
-                        } 
+                        self.map[row][col].no_left();
+                        self.map[row][col - 1].no_right();
                     }
                 }
-                          
-                // println!();
             }
         }
-        let mut regions : HashMap<u64, Vec<Plant>> = HashMap::new();
-        for row in 0..self.rows {
-            for col in 0..self.cols {
-                regions.entry(self.map[row][col].region).or_insert(Vec::new()).push(self.map[row][col].clone());    
+        let mut in_region: VecDeque<(usize,usize)> = VecDeque::new();
+        let mut sum = 0;
+        let mut p2 = 0;
+        while untoutched_squares.len() > 0 {
+            in_region.push_back(untoutched_squares.pop_front().unwrap());
+            let mut perimeter = 0;
+            let mut region_size = 0;
+            let mut reduce_perimeter_part2 = 0;
+
+            while in_region.len() > 0 {
+                let (cur_row, cur_col) = in_region.pop_front().unwrap();
+                let cur_plant = self.map[cur_row][cur_col];
+                perimeter += cur_plant.perimeter() as u64;
+                region_size += 1;
+
+                // up
+                if cur_row > 0 {
+                    let next = (cur_row-1,cur_col);
+                    let above = self.map[next.0][next.1];
+                    if cur_plant == above {
+                        reduce_perimeter_part2 +=  cur_plant.aligns_vertical(&above); // Try to find vertical sides upwards only
+                        if let Some((index,_)) = untoutched_squares.iter().find_position(|p|p == &&next) {
+                            untoutched_squares.remove(index);
+                            in_region.push_back(next);
+                        }
+                    }
+                }
+                // down
+                if cur_row < self.rows - 1 {
+                    let next = (cur_row + 1,cur_col);
+                    let under = self.map[next.0][next.1];
+                    if cur_plant == under {
+                        // reduce_perimeter_part2 += cur_plant.aligns_vertical(&under);
+                        if let Some((index,_)) = untoutched_squares.iter().find_position(|p|p == &&next) {
+                            untoutched_squares.remove(index);
+                            in_region.push_back(next);
+                        }
+                    }
+                }
+                // left
+                if cur_col > 0 {
+                    let next = (cur_row,cur_col-1);
+                    let left = self.map[next.0][next.1];
+                    if cur_plant == left {
+                        reduce_perimeter_part2 += cur_plant.aligns_horizontal(&left); // try to find horizontal sides to left only
+                        if let Some((index,_)) = untoutched_squares.iter().find_position(|p|p == &&next) {
+                            untoutched_squares.remove(index);
+                            in_region.push_back(next);
+                        }
+                    }
+                }
+                // right
+                if cur_col < self.cols - 1 {
+                    let next = (cur_row,cur_col+1);
+                    let right = self.map[next.0][next.1];
+                    if cur_plant == right {
+                        //reduce_perimeter_part2 += cur_plant.aligns_horizontal(&right);
+                        if let Some((index,_)) = untoutched_squares.iter().find_position(|p|p == &&next) {
+                            untoutched_squares.remove(index);
+                            in_region.push_back(next);
+                        }
+                    }
+                }
             }
+            sum += region_size * perimeter;
+            p2 += region_size*(perimeter-reduce_perimeter_part2)
         }
-        // regions.iter().for_each(|(region, plants)|{
-        //     let fence = plants.iter().fold(0, |acc, plant| acc + plant.perimeter as u64);
-        //     // println!("{} {} {} + {} = {}", region, plants[0].spec, plants.len(), fence, plants.len() as u64 * fence );
-        // });
-        regions.iter().fold(0u64, |acc, (_,plants)| {
-            acc + plants.len() as u64 * plants.iter().fold(0u64, |acc, plant| {
-                acc + plant.perimeter as u64
-            })
-        })         
+
+
+        (sum, p2)
     }
 }
 
@@ -128,7 +188,12 @@ impl FenceAreas {
         println!("Fence Areas: rows {}, cols {}", self.rows, self.cols);
         for row in &self.map {
             for plant in row {
-                print!("[{}|{}|{:5}] ",plant.perimeter , plant.char(), plant.region);
+                let mut edges: String = String::new();
+                edges.push(if plant.top{'T'}else{' '});
+                edges.push(if plant.bottom{'B'}else{' '});
+                edges.push(if plant.left{'L'}else{' '});
+                edges.push(if plant.right{'R'}else{' '});
+                print!("[{}|{:>4}] " ,plant.spec, edges);
             }
             println!("");
         }

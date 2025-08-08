@@ -311,7 +311,7 @@ impl Computer {
             let mut three_bit: i64 = 0;
             // println!("Index {} ", index);
             loop {
-                let mut try_a = last_a |three_bit;
+                let try_a = last_a |three_bit;
                 // println!("  Try {:o} ", try_a);
                 self.set_start(try_a,0,0);
                 out = self.execute();
